@@ -47,34 +47,21 @@ Sub CreateHyperlinks()
 End Sub
 
 Sub ApplyAutoFilter()
-    Dim summarySheet As Worksheet, detailSheet As Worksheet
-    Dim detailNameDict As Object: Set detailNameDict = CreateObject("Scripting.Dictionary")
-    Dim lastRow As Long
+    Dim summarySheet As Worksheet
+    Dim detailSheet As Worksheet
     
-    ' Obtener la hoja "Summary"
     Set summarySheet = ThisWorkbook.Sheets("Summary")
     
-    ' Aplicar autofiltro en la columna A de la hoja "Summary"
-    With summarySheet
-        .AutoFilterMode = False ' Desactivar cualquier filtro existente
-        lastRow = .Cells(.Rows.Count, "A").End(xlUp).Row
-        .Range("A1:A" & lastRow).AutoFilter
-    End With
+    Dim summaryRange As Range
+    Set summaryRange = summarySheet.Range("A1").CurrentRegion
     
-    ' Obtener el nombre de las hojas "Detail" y almacenarlos en el diccionario
+    summaryRange.AutoFilter Field:=1, Criteria1:="<>", Operator:=xlFilterValues
+    
     For Each detailSheet In ThisWorkbook.Sheets
         If detailSheet.Name Like "Detail*" Then
-            detailNameDict.Add detailSheet.Name, detailSheet.Name
+            detailSheet.Range("A1").AutoFilter Field:=1, Criteria1:="<>", Operator:=xlFilterValues
         End If
     Next detailSheet
     
-    ' Aplicar el autofiltro en la columna A de las hojas "Detail"
-    For Each detailSheetName In detailNameDict
-        Set detailSheet = ThisWorkbook.Sheets(detailSheetName)
-        With detailSheet
-            .AutoFilterMode = False ' Desactivar cualquier filtro existente
-            lastRow = .Cells(.Rows.Count, "A").End(xlUp).Row
-            .Range("A1:A" & lastRow).AutoFilter
-        End With
-    Next detailSheetName
+    summarySheet.AutoFilterMode = False
 End Sub
