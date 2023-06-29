@@ -7,6 +7,8 @@ Sub CreateHyperlinks()
     Dim idDict As Object: Set idDict = CreateObject("Scripting.Dictionary")
     Dim detailDict As Object: Set detailDict = CreateObject("Scripting.Dictionary")
     Dim detailNameDict As Object: Set detailNameDict = CreateObject("Scripting.Dictionary")
+    Dim detailColumns As Long
+    Dim detailColumn As Long
     
     Set summarySheet = ThisWorkbook.Sheets("Summary")
     summaryLastRow = summarySheet.Cells(summarySheet.Rows.Count, "A").End(xlUp).Row
@@ -14,8 +16,10 @@ Sub CreateHyperlinks()
     
     For Each summaryCell In summaryRange
         summaryID = summaryCell.Value
-        If Not idDict.exists(summaryID) Then idDict.Add summaryID, summaryCell.Address
+        If Not idDict.Exists(summaryID) Then idDict.Add summaryID, summaryCell.Address
     Next summaryCell
+    
+    detailColumns = 1 ' Starting column index for detail links
     
     For Each detailSheet In ThisWorkbook.Sheets
         If detailSheet.Name Like "Detail*" Then
@@ -27,22 +31,17 @@ Sub CreateHyperlinks()
             
             For Each detailCell In detailRange
                 summaryID = detailCell.Value
-                If idDict.exists(summaryID) Then
+                If idDict.Exists(summaryID) Then
                     Set summaryCell = summarySheet.Range(idDict(summaryID))
-                    detailCell.Hyperlinks.Add Anchor:=detailCell, Address:="", SubAddress:="'" & summarySheet.Name & "'!" & summaryCell.Address, TextToDisplay:=summaryID
+                    summaryCell.Offset(0, detailColumns).Hyperlinks.Add Anchor:=summaryCell.Offset(0, detailColumns), Address:="", SubAddress:="'" & detailSheet.Name & "'!A1", TextToDisplay:=summaryID
+                    detailCell.Hyperlinks.Add Anchor:=detailCell.Offset(0, 1), Address:="", SubAddress:="'" & summarySheet.Name & "'!" & summaryCell.Offset(0, detailColumns).Address, TextToDisplay:="Go to Summary"
                 End If
             Next detailCell
-        End If
-    Next detailSheet
-    
-    For Each detailSheet In ThisWorkbook.Sheets
-        If detailDict.exists(detailSheet.Name) Then
-            Dim detailID As String: detailID = detailDict(detailSheet.Name)
-            Dim detailColumnRange As Range: Set detailColumnRange = detailSheet.Range("B2:B" & detailLastRow)
             
-            For Each detailCell In detailColumnRange
-                detailCell.Hyperlinks.Add Anchor:=detailCell, Address:="", SubAddress:="'" & summarySheet.Name & "'!" & idDict(detailID), TextToDisplay:=detailID
-            Next detailCell
+            ' Create hyperlink from detail sheet to summary sheet in column A
+            detailSheet.Range("A1").Hyperlinks.Add Anchor:=detailSheet.Range("A1"), Address:="", SubAddress:="'" & summarySheet.Name & "'!A1", TextToDisplay:="Go to Summary"
+            
+            detailColumns = detailColumns + 1 ' Increment the detail column index
         End If
     Next detailSheet
 End Sub
