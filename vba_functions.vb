@@ -1,73 +1,77 @@
-Sub CreateHyperlinks()
-    Dim summarySheet As Worksheet, detailSheet As Worksheet
-    Dim summaryLastRow As Long, detailLastRow As Long
-    Dim summaryRange As Range, detailRange As Range
-    Dim summaryCell As Range, detailCell As Range
-    Dim summaryID As String
-    Dim idDict As Object: Set idDict = CreateObject("Scripting.Dictionary")
-    Dim detailDict As Object: Set detailDict = CreateObject("Scripting.Dictionary")
-    Dim detailNameDict As Object: Set detailNameDict = CreateObject("Scripting.Dictionary")
-    Dim detailColumns As Long
-    Dim detailColumn As Long
+Option Explicit
+
+Sub ReplaceValuesInDetails()
+    Dim wsSummary As Worksheet, wsDetail As Worksheet
+    Dim infoTable As Range, detailRange As Range, searchColumn As Range, replaceColumn As Range
+    Dim replacements As Object
+    Dim i As Long
+    Dim searchValue As Variant, replaceValue As Variant
+    Dim cell As Range, searchKey As Variant
+
+    Set wsSummary = ThisWorkbook.Worksheets("Summary")
     
-    Set summarySheet = ThisWorkbook.Sheets("Summary")
-    summaryLastRow = summarySheet.Cells(summarySheet.Rows.Count, "A").End(xlUp).Row
-    Set summaryRange = summarySheet.Range("A2:A" & summaryLastRow)
-    
-    For Each summaryCell In summaryRange
-        summaryID = summaryCell.Value
-        If Not idDict.Exists(summaryID) Then idDict.Add summaryID, summaryCell.Address
-    Next summaryCell
-    
-    detailColumns = 1 ' Starting column index for detail links
-    
-    For Each detailSheet In ThisWorkbook.Sheets
-        If detailSheet.Name Like "Detail*" Then
-            detailDict.Add detailSheet.Name, detailSheet.Name
-            detailNameDict.Add detailSheet.Name, detailSheet.Name
+    For Each wsDetail In ThisWorkbook.Worksheets
+        If wsDetail.Name <> "Summary" Then
+            Set infoTable = wsSummary.Range("A:B")
+            Set detailRange = wsDetail.UsedRange
+            Set searchColumn = detailRange.Columns("A")
+            Set replaceColumn = detailRange.Columns("B")
+            Set replacements = GetReplacementsDictionary(infoTable)
             
-            detailLastRow = detailSheet.Cells(detailSheet.Rows.Count, "A").End(xlUp).Row
-            Set detailRange = detailSheet.Range("A2:A" & detailLastRow)
+            ReplaceValuesInColumn searchColumn, replaceColumn, replacements
             
-            For Each detailCell In detailRange
-                summaryID = detailCell.Value
-                If idDict.Exists(summaryID) Then
-                    Set summaryCell = summarySheet.Range(idDict(summaryID))
-                    summaryCell.Offset(0, detailColumns).Hyperlinks.Add Anchor:=summaryCell.Offset(0, detailColumns), Address:="", SubAddress:="'" & detailSheet.Name & "'!A1", TextToDisplay:=summaryID
-                    detailCell.Hyperlinks.Add Anchor:=detailCell.Offset(0, 1), Address:="", SubAddress:="'" & summarySheet.Name & "'!" & summaryCell.Offset(0, detailColumns).Address, TextToDisplay:="Go to Summary"
-                End If
-            Next detailCell
+            Set replacements = Nothing
             
-            ' Create hyperlink from detail sheet to summary sheet in column A
-            detailSheet.Range("A1").Hyperlinks.Add Anchor:=detailSheet.Range("A1"), Address:="", SubAddress:="'" & summarySheet.Name & "'!A1", TextToDisplay:="Go to Summary"
-            
-            detailColumns = detailColumns + 1 ' Increment the detail column index
+            SortSheet wsDetail, "A", 2
         End If
-    Next detailSheet
+    Next wsDetail
+    
+    MsgBox "Replacement completed."
 End Sub
 
-Sub ApplyAutoFilter()
-    Dim summarySheet As Worksheet
-    Dim detailSheet As Worksheet
+Function GetReplacementsDictionary(infoTable As Range) As Object
+    Dim replacements As Object
+    Dim i As Long
+    Dim searchValue As Variant, replaceValue As Variant
     
-    Set summarySheet = ThisWorkbook.Sheets("Summary")
+    Set replacements = CreateObject("Scripting.Dictionary")
     
-    Dim filteredRange As Range
-    Set filteredRange = summarySheet.AutoFilter.Range
-    
-    If Not filteredRange Is Nothing Then
-        Dim filterCriteria As Variant
-        filterCriteria = filteredRange.Columns(1).Cells(2).Value
+    For i = 2 To infoTable.Rows.Count
+        searchValue = infoTable.Cells(i, 1).Value
+        replaceValue = infoTable.Cells(i, 2).Value
         
-        For Each detailSheet In ThisWorkbook.Sheets
-            If detailSheet.Name Like "Detail*" Then
-                Dim detailRange As Range
-                Set detailRange = detailSheet.Range("A1").CurrentRegion.Columns(1)
-                
-                detailRange.AutoFilter Field:=1, Criteria1:=filterCriteria, Operator:=xlFilterValues
-            End If
-        Next detailSheet
-    End If
+        If Not IsError(searchValue) And Not IsError(replaceValue) Then
+            If Not IsEmpty(searchValue) Then replacements(searchValue) = replaceValue
+        End If
+    Next i
     
-    summarySheet.AutoFilterMode = False
+    Set GetReplacementsDictionary = replacements
+End Function
+
+Sub ReplaceValuesInColumn(searchColumn As Range, replaceColumn As Range, replacements As Object)
+    Dim cell As Range
+    Dim searchKey As Variant
+    
+    For Each cell In searchColumn.Cells
+        If cell.Row > 1 Then
+            searchKey = cell.Value
+            
+            If Not IsError(searchKey) And Not IsEmpty(searchKey) Then
+                If replacements.Exists(searchKey) Then cell.Offset(0, 1).Value = replacements(searchKey)
+            End If
+        End If
+    Next cell
+End Sub
+
+Sub SortSheet(ws As Worksheet, sortColumn As String, startRow As Long)
+    With ws.Sort
+        .SortFields.Clear
+        .SortFields.Add Key:=ws.Columns(sortColumn), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        .SetRange ws.Range(sortColumn & startRow & ":" & ws.Cells(ws.Rows.Count, sortColumn).End(xlUp).Address)
+        .Header = xlNo
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
 End Sub
