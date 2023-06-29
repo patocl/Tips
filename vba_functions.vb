@@ -52,16 +52,22 @@ Sub ApplyAutoFilter()
     
     Set summarySheet = ThisWorkbook.Sheets("Summary")
     
-    Dim summaryRange As Range
-    Set summaryRange = summarySheet.Range("A1").CurrentRegion
+    Dim filteredRange As Range
+    Set filteredRange = summarySheet.AutoFilter.Range
     
-    summaryRange.AutoFilter Field:=1, Criteria1:="<>", Operator:=xlFilterValues
-    
-    For Each detailSheet In ThisWorkbook.Sheets
-        If detailSheet.Name Like "Detail*" Then
-            detailSheet.Range("A1").AutoFilter Field:=1, Criteria1:="<>", Operator:=xlFilterValues
-        End If
-    Next detailSheet
+    If Not filteredRange Is Nothing Then
+        Dim filterCriteria As Variant
+        filterCriteria = filteredRange.Columns(1).Cells(2).Value
+        
+        For Each detailSheet In ThisWorkbook.Sheets
+            If detailSheet.Name Like "Detail*" Then
+                Dim detailRange As Range
+                Set detailRange = detailSheet.Range("A1").CurrentRegion.Columns(1)
+                
+                detailRange.AutoFilter Field:=1, Criteria1:=filterCriteria, Operator:=xlFilterValues
+            End If
+        Next detailSheet
+    End If
     
     summarySheet.AutoFilterMode = False
 End Sub
