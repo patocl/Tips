@@ -50,3 +50,31 @@ Sub UpdateOrInsertRecordsBatch()
     Set rs = Nothing
     Set conn = Nothing
 End Sub
+
+
+Function CloneRecordset(originalRecordset As Recordset) As Recordset
+    Dim clonedRecordset As Recordset
+    Set clonedRecordset = New Recordset
+    
+    Dim field As Field
+    For Each field In originalRecordset.Fields
+        clonedRecordset.Fields.Append field.Name, field.Type, field.DefinedSize, field.Attributes
+    Next field
+    
+    clonedRecordset.CursorLocation = adUseClient
+    clonedRecordset.Open
+    
+    originalRecordset.MoveFirst
+    Do Until originalRecordset.EOF
+        clonedRecordset.AddNew
+        For Each field In originalRecordset.Fields
+            clonedRecordset.Fields(field.Name).Value = field.Value
+        Next field
+        clonedRecordset.Update
+        originalRecordset.MoveNext
+    Loop
+    
+    Set CloneRecordset = clonedRecordset
+End Function
+
+
