@@ -339,3 +339,17 @@ In this case, if an error occurs in the subroutine but no exception is thrown, t
 If you want the transaction to automatically rollback when an error occurs, it is important to ensure that any error within the transaction is properly thrown using Throw. This will allow the transaction to detect the error and automatically rollback, ensuring data integrity.
 
 Therefore, it is recommended to handle errors within the transaction properly and throw exceptions (Throw) when necessary to allow the transaction to rollback correctly. This will help maintain consistency and data integrity in case of errors in the transaction logic.
+
+# Common mistakes that developers can make when working with TransactionScope transactions:
+
+- Failure to complete the transaction: It is important to call the Complete() method on the TransactionScope object to indicate that the transaction has been successfully completed. If the transaction is not completed, it will be automatically rolled back when the scope ends.
+
+- Improper exception handling: When working with transactions, proper exception handling is crucial to ensure that the transaction is rolled back correctly in case of an error. Forgetting to catch exceptions or not throwing exceptions when necessary can result in incomplete transactions or data corruption.
+
+- Incorrect nesting of transactions: Nested transactions within a TransactionScope can cause issues if not properly managed. It is important to understand the rules and behaviors of nested transactions to avoid problems such as long-held locks or incorrect transaction rollbacks.
+
+- Using separate TransactionScope objects instead of a shared one: It is more efficient and safer to use a single shared TransactionScope object instead of creating multiple instances for individual transactions. Using multiple TransactionScope objects can lead to performance issues and transactional consistency problems.
+
+- Not considering performance: Using transactions can have a significant impact on application performance. It is important to balance the duration of transactions and the granularity of transactional operations to minimize overhead and optimize performance.
+
+- Failure to properly configure isolation level: The isolation level of the transaction (IsolationLevel) determines how data is shared and locked between concurrent transactions. Failing to select the appropriate isolation level can result in concurrency issues or inconsistent data reads.
