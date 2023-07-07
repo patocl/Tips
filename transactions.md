@@ -215,3 +215,127 @@ End Using
 ```
 
 In this example, the Serializable isolation level is set explicitly. This isolation level acquires range locks on the accessed resources, preventing other transactions from inserting, updating, or deleting data within the affected ranges until the transaction completes.
+
+
+
+# Implementing basic Retry Pattern in VB.NET:
+
+```vb
+Dim maxRetries As Integer = 3 ' Maximum number of transaction retries
+Dim retryCount As Integer = 0 ' Retry count
+
+Do
+    Try
+        Using scope As New TransactionScope()
+            ' Transaction logic here
+
+            scope.Complete() ' Complete the transaction if no exception is thrown
+
+            ' If the transaction completes without throwing an exception, exit the retry loop
+            Exit Do
+        End Using
+    Catch ex As Exception
+        ' Handle the exception and log error information if needed
+
+        retryCount += 1 ' Increment the retry count
+
+        If retryCount <= maxRetries Then
+            ' Wait for a period of time before retrying the transaction
+            Thread.Sleep(1000) ' 1 second pause
+
+            ' Continue with the next transaction attempt
+        Else
+            ' If the maximum number of retries is exceeded, throw the exception or take appropriate actions
+            Throw
+        End If
+    End Try
+Loop
+```
+
+In the above example, we set a maximum number of retries (maxRetries) and a retry count (retryCount). The transaction code is placed within a Do...Loop loop and repeatedly executed until the transaction completes successfully without throwing an exception or until the maximum retries are reached.
+
+If an exception occurs within the transaction, it is caught and handled in the Catch block. At this point, the retry count is incremented, and it is checked if there are still retries available. If so, a pause is introduced using Thread.Sleep before retrying the transaction. You can adjust the duration of the pause as per your needs.
+
+If the maximum number of retries is exceeded, you can either throw the exception to be handled elsewhere or take appropriate actions based on your specific case.
+
+# Advanced structure for implementing the retry pattern with nested transactions
+
+```vb
+Public Class TransactionProcessor
+    Private Const MaxRetries As Integer = 3 ' Maximum number of retries
+    Private RetryCount As Integer = 0 ' Retry count
+
+    Public Sub ProcessTransactions()
+        Do
+            Try
+                Using outerScope As New TransactionScope()
+                    ' Outer transaction logic here
+
+                    InnerTransactionLogic()
+
+                    outerScope.Complete() ' Complete the outer transaction if no exception is thrown
+
+                    ' If both transactions complete without throwing an exception, exit the retry loop
+                    Exit Do
+                End Using
+            Catch ex As Exception
+                ' Handle the outer transaction exception
+
+                RetryCount += 1 ' Increment the retry count
+
+                If RetryCount <= MaxRetries Then
+                    ' Wait for a period of time before retrying
+                    Thread.Sleep(1000) ' 1 second pause
+
+                    ' Continue with the next retry
+                Else
+                    ' If the maximum number of retries is exceeded, throw the exception or take appropriate actions
+                    Throw
+                End If
+            End Try
+        Loop
+    End Sub
+
+    Private Sub InnerTransactionLogic()
+        Try
+            Using innerScope As New TransactionScope(TransactionScopeOption.Required)
+                ' Inner transaction logic here
+
+                ' Perform inner transaction operations
+                ' ...
+
+                innerScope.Complete() ' Complete the inner transaction if no exception is thrown
+            End Using
+        Catch ex As Exception
+            ' Handle the inner transaction exception
+
+            ' Rollback the inner transaction if necessary
+
+            ' Rethrow the exception to trigger the retry
+            Throw
+        End Try
+    End Sub
+End Class
+```
+
+In this advanced structure, we have a TransactionProcessor class that encapsulates the transaction processing logic. The ProcessTransactions method serves as the entry point for the transaction processing.
+
+The InnerTransactionLogic method represents the inner transaction logic and is invoked within the ProcessTransactions method. You can add more methods to the class for different stages or components of the transaction processing, depending on your specific requirements.
+
+The retry pattern is implemented within the ProcessTransactions method using a Do...Loop loop. The transactions are retried until they complete successfully or the maximum number of retries is reached.
+
+If an exception occurs within the inner transaction, it is caught and handled within the InnerTransactionLogic method. You can perform rollback or take other necessary actions. The exception is then rethrown to trigger the retry.
+
+If an exception occurs within the outer transaction, it is caught and handled within the ProcessTransactions method. The retry pattern is applied in the same way as in the previous examples.
+
+The loop continues until either both transactions complete without throwing exceptions or the maximum number of retries is exceeded.
+
+# Common Pitfall on Transactions development
+
+When a transaction is initiated with TransactionScope and an error occurs in a invoked subroutine within the transaction that doesn't throw an exception **Throw**, the transaction will continue executing until it is explicitly completed or rolled back.
+
+In this case, if an error occurs in the subroutine but no exception is thrown, the transaction will not automatically detect the error and will continue executing the remaining operations within the transaction. It is the responsibility of the code within the transaction to detect the error and take necessary actions to rollback the transaction if needed.
+
+If you want the transaction to automatically rollback when an error occurs, it is important to ensure that any error within the transaction is properly thrown using Throw. This will allow the transaction to detect the error and automatically rollback, ensuring data integrity.
+
+Therefore, it is recommended to handle errors within the transaction properly and throw exceptions (Throw) when necessary to allow the transaction to rollback correctly. This will help maintain consistency and data integrity in case of errors in the transaction logic.
