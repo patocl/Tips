@@ -1,46 +1,46 @@
-# Function to query local users on the machine
-function Get-LocalUsers {
-    Get-WmiObject Win32_UserAccount | Where-Object { $_.LocalAccount -eq $true }
-}
+# Obtener la lista de usuarios locales con net user y guardarla en un archivo
+net user > usuarios_locales.txt
 
-# Function to get group memberships for a local user
-function Get-LocalUserGroupMemberships {
+# Leer el archivo y procesar cada línea
+$usuariosLocales = Get-Content -Path usuarios_locales.txt | Where-Object { $_ -like "  *" } | ForEach-Object { $_.Trim() }
+
+# Cargar el módulo de Active Directory
+Import-Module ActiveDirectory
+
+# Función para obtener la información detallada de un usuario de dominio
+function Get-DomainUserDetails {
     param (
         [string]$userName
     )
 
-    $localUser = New-Object System.Security.Principal.NTAccount($userName)
-    $localUserSID = $localUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
-    $userGroups = Get-WmiObject Win32_GroupUser | Where-Object { $_.PartComponent -match $localUserSID }
+    # Obtener el usuario de dominio con información detallada
+    $user = Get-ADUser -Identity $userName -Properties MemberOf
 
-    if ($userGroups) {
-        $groupNames = $userGroups | ForEach-Object { $_.Caption }
-        return $groupNames
-    } else {
-        return @()
-    }
-}
-
-# Query local users
-$localUsers = Get-LocalUsers
-if ($localUsers) {
-    Write-Output "Local Users:"
-    foreach ($user in $localUsers) {
-        Write-Output "User: $($user.Name)"
+    if ($user) {
+        Write-Output "User: $($user.SamAccountName)"
         Write-Output "Description: $($user.Description)"
-        Write-Output "Account Type: Local User"
+        Write-Output "Account Type: Domain User"
 
-        $userGroups = Get-LocalUserGroupMemberships -userName $user.Name
+        # Obtener los grupos a los que pertenece el usuario
+        $userGroups = $user.MemberOf | ForEach-Object { Get-ADGroup $_ }
         if ($userGroups) {
             Write-Output "Group Memberships:"
-            foreach ($groupName in $userGroups) {
-                Write-Output "- $groupName"
+            foreach ($group in $userGroups) {
+                Write-Output "- $($group.Name)"
             }
         } else {
             Write-Output "User is not a member of any groups."
         }
-        Write-Output "-------------------------"
+    } else {
+        Write-Output "User $userName not found in the domain."
     }
-} else {
-    Write-Output "No local users found."
+}
+
+# Procesar cada usuario y obtener la información detallada
+foreach ($usuario in $usuariosLocales) {
+    Write-Output "------------------------------------------------------"
+    Write-Output "Local User: $usuario"
+
+    # Obtener información detallada de usuarios de dominio
+    Get-DomainUserDetails -userName $usuario
 }
