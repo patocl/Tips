@@ -1,44 +1,40 @@
-# Cargar el módulo de Active Directory
-Import-Module ActiveDirectory
+# Function to query local users on the machine
+function Get-LocalUsers {
+    Get-WmiObject Win32_UserAccount | Where-Object { $_.LocalAccount -eq $true }
+}
 
-# Obtener todos los usuarios locales usando WMI
-$localUsers = Get-WmiObject Win32_UserAccount | Where-Object { $_.LocalAccount -eq $true }
-
-# Obtener todos los usuarios de dominio
-$domainUsers = Get-ADUser -Filter *
-
-# Función para obtener los grupos a los que pertenece un usuario de dominio
-function Get-UserGroupMemberships {
+# Function to get group memberships for a local user
+function Get-LocalUserGroupMemberships {
     param (
         [string]$userName
     )
 
-    $userGroups = Get-ADUser -Identity $userName | Get-ADGroupMember
+    $localUser = New-Object System.Security.Principal.NTAccount($userName)
+    $localUserSID = $localUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
+    $userGroups = Get-WmiObject Win32_GroupUser | Where-Object { $_.PartComponent -match $localUserSID }
+
     if ($userGroups) {
-        Write-Output "Group Memberships for $userName:"
-        foreach ($group in $userGroups) {
-            Write-Output "- $($group.Name)"
-        }
+        $groupNames = $userGroups | ForEach-Object { $_.Caption }
+        return $groupNames
     } else {
-        Write-Output "User $userName is not a member of any groups."
+        return @()
     }
 }
 
-# Mostrar la lista de usuarios locales y sus grupos
+# Query local users
+$localUsers = Get-LocalUsers
 if ($localUsers) {
     Write-Output "Local Users:"
     foreach ($user in $localUsers) {
         Write-Output "User: $($user.Name)"
         Write-Output "Description: $($user.Description)"
         Write-Output "Account Type: Local User"
-        
-        $localUser = New-Object System.Security.Principal.NTAccount($user.Name)
-        $localUserSID = $localUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
-        $userGroups = Get-WmiObject Win32_GroupUser | Where-Object { $_.PartComponent -match $localUserSID }
+
+        $userGroups = Get-LocalUserGroupMemberships -userName $user.Name
         if ($userGroups) {
             Write-Output "Group Memberships:"
-            foreach ($group in $userGroups) {
-                Write-Output "- $($group.Caption)"
+            foreach ($groupName in $userGroups) {
+                Write-Output "- $groupName"
             }
         } else {
             Write-Output "User is not a member of any groups."
@@ -47,18 +43,4 @@ if ($localUsers) {
     }
 } else {
     Write-Output "No local users found."
-}
-
-# Mostrar la lista de usuarios de dominio y sus grupos
-if ($domainUsers) {
-    Write-Output "Domain Users:"
-    foreach ($user in $domainUsers) {
-        Write-Output "User: $($user.SamAccountName)"
-        Write-Output "Description: $($user.Description)"
-        Write-Output "Account Type: Domain User"
-        Get-UserGroupMemberships -userName $user.SamAccountName
-        Write-Output "-------------------------"
-    }
-} else {
-    Write-Output "No domain users found."
 }
