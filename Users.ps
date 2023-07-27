@@ -1,0 +1,145 @@
+# Function to query local users on the machine
+function Get-LocalUsers {
+    $localUsers = Get-WmiObject Win32_UserAccount | Where-Object { $_.LocalAccount -eq $true }
+    return $localUsers
+}
+
+# Function to query domain users on a specific domain
+function Get-DomainUsers {
+    param (
+        [string]$targetDomain,
+        [string]$adminUsername
+    )
+
+    # Load the Active Directory module
+    Import-Module ActiveDirectory
+
+    # Get all user accounts from the target domain using specific credentials
+    $credential = Get-Credential -UserName "$targetDomain\$adminUsername" -Message "Enter password for $targetDomain"
+    $domainUsers = Get-ADUser -Server $targetDomain -Credential $credential -Filter *
+
+    return $domainUsers
+}
+
+# Function to get group memberships for a user
+function Get-UserGroupMemberships {
+    param (
+        [string]$userName,
+        [string]$targetDomain,
+        [string]$adminUsername
+    )
+
+    # Load the Active Directory module
+    Import-Module ActiveDirectory
+
+    # Get the user object from the target domain using specific credentials
+    $credential = Get-Credential -UserName "$targetDomain\$adminUsername" -Message "Enter password for $targetDomain"
+    $user = Get-ADUser -Server $targetDomain -Credential $credential -Identity $userName
+
+    if ($user) {
+        Write-Output "User: $($user.SamAccountName)"
+        Write-Output "SID: $($user.SID)"
+        Write-Output "Description: $($user.Description)"
+        Write-Output "Account Type: Domain User"
+
+        # Get the groups the user is a member of
+        $userGroups = Get-ADUser -Identity $userName -Server $targetDomain -Credential $credential | Get-ADGroupMember
+        if ($userGroups) {
+            Write-Output "Group Memberships:"
+            foreach ($group in $userGroups) {
+                Write-Output "- $($group.Name)"
+            }
+        } else {
+            Write-Output "User is not a member of any groups."
+        }
+    } else {
+        Write-Output "User $userName not found in the $targetDomain domain."
+    }
+}
+
+# Example usage:
+
+# Query local users
+$localUsers = Get-LocalUsers
+if ($localUsers) {
+    Write-Output "Local Users:"
+    foreach ($user in $localUsers) {
+        Write-Output "User: $($user.Name)"
+        Write-Output "SID: $($user.SID)"
+        Write-Output "Description: $($user.Description)"
+        Write-Output "Account Type: Local User"
+
+        # Get the groups the local user is a member of (for local users, the Get-ADUser cmdlet won't work)
+        $localUser = New-Object System.Security.Principal.NTAccount($user.Name)
+        $localUserSID = $localUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
+        $userGroups = Get-WmiObject Win32_GroupUser | Where-Object { $_.PartComponent -match $localUserSID }
+        if ($userGroups) {
+            Write-Output "Group Memberships:"
+            foreach ($group in $userGroups) {
+                Write-Output "- $($group.Caption)"
+            }
+        } else {
+            Write-Output "User is not a member of any groups."
+        }
+        Write-Output "-------------------------"
+    }
+} else {
+    Write-Output "No local users found."
+}
+
+# Query domain users (replace 'targetdomain.com' and 'your_admin_username' with appropriate values)
+$targetDomain = 'targetdomain.com'
+$adminUsername = 'your_admin_username'
+$domainUsers = Get-DomainUsers -targetDomain $targetDomain -adminUsername $adminUsername
+
+if ($domainUsers) {
+    Write-Output "Domain Users in $targetDomain:"
+    foreach ($user in $domainUsers) {
+        Get-UserGroupMemberships -userName $user.SamAccountName -targetDomain $targetDomain -adminUsername $adminUsername
+        Write-Output "-------------------------"
+    }
+} else {
+    Write-Output "No domain users found in $targetDomain."
+}
+
+# Function to query domain user information
+function Get-DomainUserInformation {
+    param (
+        [string]$domainUser,
+        [string]$targetDomain,
+        [string]$adminUsername
+    )
+
+    if ($domainUser -match '^([^\\]+)\\(.+)$') {
+        $domain = $matches[1]
+        $username = $matches[2]
+
+        # Load the Active Directory module
+        Import-Module ActiveDirectory
+
+        # Get the user object from the target domain using specific credentials
+        $credential = Get-Credential -UserName "$targetDomain\$adminUsername" -Message "Enter password for $targetDomain"
+        $user = Get-ADUser -Server $targetDomain -Credential $credential -Identity $username -Properties MemberOf
+
+        if ($user) {
+            Write-Output "User: $($user.SamAccountName)"
+            Write-Output "Member of the following groups:"
+            foreach ($group in $user.MemberOf) {
+                $groupName = (Get-ADGroup $group -Server $targetDomain -Credential $credential).Name
+                Write-Output "- $groupName"
+            }
+        } else {
+            Write-Output "User $username not found in the $targetDomain domain."
+        }
+    } else {
+        Write-Output "Invalid domain\username format."
+    }
+}
+
+# Example usage:
+$targetDomain = 'targetdomain.com'
+$domainUser = "$targetDomain\username"
+$adminUsername = 'your_admin_username'
+
+Get-DomainUserInformation -domainUser $domainUser -targetDomain $targetDomain -adminUsername $adminUsername
+
