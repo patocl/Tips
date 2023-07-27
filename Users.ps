@@ -1,19 +1,19 @@
-# Obtener la lista de usuarios locales con net user y guardarla en un archivo
-net user > usuarios_locales.txt
+# Get the list of local users using net user and save it to a file
+net user > local_users.txt
 
-# Leer el archivo y procesar cada línea
-$usuariosLocales = Get-Content -Path usuarios_locales.txt | Where-Object { $_ -like "  *" } | ForEach-Object { $_.Trim() }
+# Read the file and process each line to get the list of local users
+$localUsers = Get-Content -Path local_users.txt | Where-Object { $_ -like "  *" } | ForEach-Object { $_.Trim() }
 
-# Cargar el módulo de Active Directory
+# Load the Active Directory module
 Import-Module ActiveDirectory
 
-# Función para obtener la información detallada de un usuario de dominio
+# Function to get detailed information of a domain user
 function Get-DomainUserDetails {
     param (
         [string]$userName
     )
 
-    # Obtener el usuario de dominio con información detallada
+    # Get the domain user with detailed information
     $user = Get-ADUser -Identity $userName -Properties MemberOf
 
     if ($user) {
@@ -21,7 +21,7 @@ function Get-DomainUserDetails {
         Write-Output "Description: $($user.Description)"
         Write-Output "Account Type: Domain User"
 
-        # Obtener los grupos a los que pertenece el usuario
+        # Get the groups the user is a member of
         $userGroups = $user.MemberOf | ForEach-Object { Get-ADGroup $_ }
         if ($userGroups) {
             Write-Output "Group Memberships:"
@@ -36,11 +36,11 @@ function Get-DomainUserDetails {
     }
 }
 
-# Procesar cada usuario y obtener la información detallada
-foreach ($usuario in $usuariosLocales) {
+# Process each local user and get detailed information for domain users
+foreach ($localUser in $localUsers) {
     Write-Output "------------------------------------------------------"
-    Write-Output "Local User: $usuario"
+    Write-Output "Local User: $localUser"
 
-    # Obtener información detallada de usuarios de dominio
-    Get-DomainUserDetails -userName $usuario
+    # Get detailed information of domain users
+    Get-DomainUserDetails -userName $localUser
 }
