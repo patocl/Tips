@@ -1,13 +1,16 @@
 param(
     [string]$action,           # 'install' or 'uninstall'
-    [string]$installerName     # Name of the installer
+    [string]$installerName,    # Name of the installer
+    [switch]$help              # Show help
 )
 
-# Get the current script directory
-$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
-
-# Full path to the installer CSV file
-$csvFilePath = Join-Path -Path $scriptPath -ChildPath "installer.csv"
+# Function to display usage information
+function ShowHelp {
+    Write-Host "Usage:"
+    Write-Host "  -action <install|uninstall> - Specifies the action to perform."
+    Write-Host "  -installerName <installer name> - Specifies the name of the installer to install or uninstall."
+    Write-Host "  -help - Shows this help message."
+}
 
 # Function to read installer information from CSV
 function GetInstallerInfo {
@@ -23,32 +26,44 @@ function GetInstallerInfo {
 # Function to install the software
 function InstallSoftware {
     param (
-        [string]$installerExecutable
+        [string]$msiPath
     )
 
-    Start-Process -FilePath $installerExecutable -Verb RunAs
+    Start-Process -FilePath "msiexec" -ArgumentList "/i `"$msiPath`"" -Verb RunAs
 }
 
 # Function to uninstall the software
 function UninstallSoftware {
     param (
-        [string]$installerExecutable
+        [string]$msiPath
     )
 
-    Start-Process -FilePath $installerExecutable -ArgumentList "/uninstall" -Verb RunAs
+    Start-Process -FilePath "msiexec" -ArgumentList "/x `"$msiPath`"" -Verb RunAs
 }
+
+# Check if the help switch is specified
+if ($help) {
+    ShowHelp
+    exit
+}
+
+# Get the current script directory
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
+
+# Full path to the installer CSV file
+$csvFilePath = Join-Path -Path $scriptPath -ChildPath "installer.csv"
 
 # Check if the CSV file exists
 if (Test-Path $csvFilePath) {
     $installerInfo = GetInstallerInfo -installerName $installerName -csvPath $csvFilePath
 
     if ($installerInfo) {
-        $installerExecutable = $installerInfo.InstallerExecutable
+        $msiPath = $installerInfo.InstallerExecutable
 
         if ($action -eq "install") {
-            InstallSoftware -installerExecutable $installerExecutable
+            InstallSoftware -msiPath $msiPath
         } elseif ($action -eq "uninstall") {
-            UninstallSoftware -installerExecutable $installerExecutable
+            UninstallSoftware -msiPath $msiPath
         } else {
             Write-Host "Invalid action specified. Use -help for usage information."
         }
@@ -58,8 +73,3 @@ if (Test-Path $csvFilePath) {
 } else {
     Write-Host "Installer CSV file not found."
 }
-
-
-InstallerName,InstallerExecutable,Version
-YourProgram1,"C:\Path\To\Installer1.exe",1.0.0
-YourProgram2,"C:\Path\To\Installer2.exe",2.0.0
