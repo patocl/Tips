@@ -1,0 +1,90 @@
+ProgramName,Version
+YourProgram1,1.0.0
+YourProgram2,2.0.0
+
+param(
+    [string]$csvFilePath,
+    [switch]$listVersions,
+    [switch]$help
+)
+
+if ($help) {
+    Write-Host "Usage:"
+    Write-Host "  -csvFilePath <path to CSV file> - Specifies the path to the CSV file containing the program list."
+    Write-Host "  -listVersions - Lists the installed versions of the programs specified in the CSV file."
+    Write-Host "  -help - Shows this help message."
+    exit
+}
+
+# Function to find all installed versions of a program
+function FindInstalledVersions {
+    param (
+        [string]$programDisplayName
+    )
+
+    $uninstallKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    $subkeys = Get-ChildItem $uninstallKey
+
+    $versions = @()
+
+    foreach ($key in $subkeys) {
+        $displayName = (Get-ItemProperty "$key").DisplayName
+
+        if ($displayName -eq $programDisplayName) {
+            $displayVersion = (Get-ItemProperty "$key").DisplayVersion
+            $versions += $displayVersion
+        }
+    }
+
+    return $versions
+}
+
+# Function to find the uninstall key for a program version
+function FindUninstallKeyByVersion {
+    param (
+        [string]$programDisplayName,
+        [string]$desiredVersion
+    )
+
+    $uninstallKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    $subkeys = Get-ChildItem $uninstallKey
+
+    foreach ($key in $subkeys) {
+        $displayName = (Get-ItemProperty "$key").DisplayName
+        $displayVersion = (Get-ItemProperty "$key").DisplayVersion
+
+        if ($displayName -eq $programDisplayName -and $displayVersion -eq $desiredVersion) {
+            return $key.PSChildName
+        }
+    }
+
+    return $null
+}
+
+# Read the CSV file and process each program
+$programList = Import-Csv $csvFilePath
+
+foreach ($program in $programList) {
+    $programName = $program.ProgramName
+    $version = $program.Version
+
+    if ($listVersions) {
+        $installedVersions = FindInstalledVersions -programDisplayName $programName
+
+        if ($installedVersions -ne $null -and $installedVersions.Count -gt 0) {
+            Write-Host "Installed versions of $programName: $($installedVersions -join ', ')"
+        } else {
+            Write-Host "$programName is not installed."
+        }
+    } else {
+        # Find the uninstall key for the specified program version
+        $uninstallKey = FindUninstallKeyByVersion -programDisplayName $programName -desiredVersion $version
+
+        if ($uninstallKey -ne $null) {
+            $installerName = GetInstallerNameFromUninstallKey -uninstallKey $uninstallKey
+            Write-Host "Installer for $programName version $version: $installerName"
+        } else {
+            Write-Host "$programName version $version not found."
+        }
+    }
+}
