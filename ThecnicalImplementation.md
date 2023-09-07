@@ -1,0 +1,145 @@
+# Technical Document: Enhancements in Design and Development - Introduction of WaitRetryPolicyOnSqlDeadlock and Extension Classes
+
+## Table of Contents
+1. Introduction
+2. Background
+3. WaitRetryPolicyOnSqlDeadlock Class
+   - 3.1 Purpose
+   - 3.2 Constructor Parameters
+   - 3.3 Benefits
+4. Extension Classes
+   - 4.1 CheckExtensions
+     - 4.1.1 Purpose
+     - 4.1.2 Benefits
+   - 4.2 ConvertExtensions
+     - 4.2.1 Purpose
+     - 4.2.2 Benefits
+   - 4.3 GuardExtensions
+     - 4.3.1 Purpose
+     - 4.3.2 Benefits
+5. Conclusion
+
+## 1. Introduction
+
+In the ever-evolving landscape of software development, it is imperative to continuously enhance and improve our codebase to meet the demands of performance, reliability, and maintainability. This technical document outlines the need for introducing a new class, WaitRetryPolicyOnSqlDeadlock, and the addition of extension classes - CheckExtensions, ConvertExtensions, and GuardExtensions - into our software development framework.
+
+## 2. Background
+
+As our software application grows in complexity and handles a greater volume of data and transactions, it is crucial to address specific challenges that may arise. One of these challenges is handling SQL deadlocks gracefully. SQL deadlocks occur when multiple database transactions compete for the same resources and can lead to performance degradation or application failures.
+
+## 3. Folder Structure for the Project
+
+To maintain a well-organized and structured codebase, our project follows a logical folder structure. This structure ensures that different components and modules of the application are neatly organized for easy navigation and maintenance. Below is an overview of our project's folder structure:
+
+### 3.1 Config
+
+- **IConfigurationManager.vb:** This file defines an interface for configuration management within our application.
+- **ConfigurationManager.vb:** The ConfigurationManager class implements the IConfigurationManager interface and provides methods to manage application configurations.
+
+### 3.2 Data
+
+- **IDbClient.vb:** This file contains the IDbClient interface, which defines the contract for interacting with the database.
+- **SqlClient.vb:** The SqlClient class implements the IDbClient interface and provides functionality for communicating with SQL databases.
+
+### 3.3 Extensions
+
+- **CheckExtensions.vb:** This file hosts functions responsible for performing various checks and returning true or false based on the evaluation.
+- **ConvertExtensions.vb:** The ConvertExtensions class contains functions for data type conversion and object transformation.
+- **GuardExtensions.vb:** GuardExtensions houses functions that raise exceptions when specific conditions fail.
+
+### 3.4 Logging
+
+- **CompanyLogger.vb:** CompanyLogger is responsible for application-specific logging and implements the ICompanyLogger interface.
+- **ICompanyLogger.vb:** The ICompanyLogger interface defines the contract for application-specific logging.
+- **ISqlLogger.vb:** ISqlLogger is an interface that specifies methods for SQL-related logging.
+- **SqlLogger.vb:** SqlLogger implements ISqlLogger and handles SQL-specific logging.
+
+### 3.5 Polly
+
+- **ContextInfo.vb:** ContextInfo contains classes and structures related to context information during retries.
+- **Parameters.vb:** Parameters class encapsulates parameters used in Polly policies.
+- **IWaitRetryPolicyOnSqlDeadlock.vb:** This file defines the interface for a wait and retry policy specifically tailored for handling SQL deadlocks.
+- **WaitRetryPolicyOnSqlDeadlock.vb:** The WaitRetryPolicyOnSqlDeadlock class implements the IWaitRetryPolicyOnSqlDeadlock interface and manages retry logic in SQL deadlock scenarios.
+
+This organized folder structure aids in code maintenance, promotes code separation, and allows team members to easily locate and work on specific parts of the application. It also aligns with best practices for software development and ensures that our project remains manageable as it continues to evolve.
+
+Please refer to the respective folders and files for detailed documentation on each component and its functionality.
+
+## 4. WaitRetryPolicyOnSqlDeadlock Class
+
+### 4.1 Purpose
+
+The WaitRetryPolicyOnSqlDeadlock class serves a critical role in addressing SQL deadlocks within our software application. When a deadlock occurs during a database transaction, this class harnesses the power of Polly, a resilience and transient-fault-handling library, to automatically manage the retry logic and wait periods, granting the transaction an opportunity to complete successfully.
+
+### 4.2 Constructor Parameters
+
+The WaitRetryPolicyOnSqlDeadlock class features a constructor with three essential parameters:
+
+1. **RetryCount:** This parameter defines the number of retry attempts that will be made before marking the operation as failed. For example, if you set RetryCount to 3, the system will attempt the original transaction and, in the event of a deadlock, will retry it up to three times, allowing for multiple opportunities to succeed.
+
+2. **RetryDelay:** The RetryDelay parameter determines the duration of the pause or wait time between each retry attempt. It is specified in milliseconds. For instance, if you set RetryDelay to 1000 milliseconds, the system will wait for one second between each retry.
+
+3. **ILogger:** This parameter accepts an instance of an ILogger, which is a logging interface commonly used in .NET applications. The ILogger allows you to capture and record detailed information about retry attempts, making it invaluable for troubleshooting and performance monitoring.
+
+### 4.3 Benefits
+
+By utilizing the WaitRetryPolicyOnSqlDeadlock class with the specified constructor parameters, our application can reap several key advantages:
+
+- **Enhanced Reliability:** The automatic retry mechanism increases the likelihood of successful transaction completion in the presence of SQL deadlocks, ultimately boosting the reliability of our application.
+
+- **Improved User Experience:** Users will encounter fewer disruptions caused by database-related issues, resulting in a more seamless and enjoyable experience when interacting with our software.
+
+- **Streamlined Error Handling:** The class encapsulates the retry and wait logic, simplifying error handling and making our codebase more robust and maintainable.
+
+The integration of WaitRetryPolicyOnSqlDeadlock empowers our application to gracefully handle SQL deadlocks, ensuring its resilience even in challenging database contention scenarios.
+
+## 5. Extension Classes
+
+### 5.1 CheckExtensions
+
+#### 5.1.1 Purpose
+
+The CheckExtensions class is responsible for hosting functions that perform various checks and return true or false based on the evaluation. These functions are designed to enhance the readability and reusability of our code by encapsulating common validation logic.
+
+#### 5.1.2 Benefits
+
+- **Code readability:** By centralizing validation logic in the CheckExtensions class, our code becomes more concise and easier to understand.
+
+- **Reusability:** The functions in this class can be reused across different parts of the application, reducing code duplication.
+
+- **Consistency:** Centralized checks promote consistency in our validation processes.
+
+### 5.2 ConvertExtensions
+
+#### 5.2.1 Purpose
+
+The ConvertExtensions class hosts functions responsible for converting between different object types. These functions facilitate data transformations and type conversions, enhancing the flexibility of our codebase.
+
+#### 5.2.2 Benefits
+
+- **Data transformation:** ConvertExtensions simplifies the process of converting data from one format to another, improving data compatibility.
+
+- **Type safety:** By encapsulating type conversion logic, we reduce the risk of type-related errors.
+
+- **Code modularity:** The ConvertExtensions class promotes modular coding practices by isolating conversion functionality.
+
+### 5.3 GuardExtensions
+
+#### 5.3.1 Purpose
+
+The GuardExtensions class hosts functions that raise exceptions when specific checks fail. These functions serve as a defensive coding mechanism to detect and handle exceptional scenarios early in the code execution flow.
+
+#### 5.3.2 Benefits
+
+- **Early error detection:** GuardExtensions helps identify and address issues at the earliest stage of execution, improving the robustness of our code.
+
+- **Exception handling:** By centralizing exception-raising logic, we maintain a consistent approach to handling exceptional situations.
+
+- **Code maintainability:** Isolating error-checking code in GuardExtensions improves code maintainability and readability.
+
+
+## 6. Conclusion
+
+The introduction of the WaitRetryPolicyOnSqlDeadlock class and the extension classes (CheckExtensions, ConvertExtensions, and GuardExtensions) represents a significant enhancement to our design and development framework. These additions aim to improve the reliability, maintainability, and flexibility of our software application, ensuring that it continues to meet the evolving needs of our users and stakeholders.
+
+By embracing these changes, we are poised to create a more robust and responsive software solution, capable of handling the challenges and demands of modern software development.
