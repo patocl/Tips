@@ -143,3 +143,60 @@ The GuardExtensions class hosts functions that raise exceptions when specific ch
 The introduction of the WaitRetryPolicyOnSqlDeadlock class and the extension classes (CheckExtensions, ConvertExtensions, and GuardExtensions) represents a significant enhancement to our design and development framework. These additions aim to improve the reliability, maintainability, and flexibility of our software application, ensuring that it continues to meet the evolving needs of our users and stakeholders.
 
 By embracing these changes, we are poised to create a more robust and responsive software solution, capable of handling the challenges and demands of modern software development.
+
+
+## 7. Unit Testing with xUnit, Moq, and FluentAssertions
+
+To ensure the robustness and reliability of our software, we embrace a comprehensive unit testing approach. In this section, we will outline our unit testing strategy and the tools and libraries we use.
+
+### 7.1 Testing Frameworks
+
+We employ the following tools and frameworks for unit testing:
+
+- **xUnit:** xUnit is our chosen unit testing framework. It provides a simple and extensible architecture for writing and executing tests. We utilize xUnit to define and run our unit tests.
+
+- **Moq:** Moq is a mocking framework that aids in creating mock objects and setting up behavior for dependencies. It allows us to isolate the code being tested by replacing real dependencies with mock implementations.
+
+- **FluentAssertions:** FluentAssertions is a library that enhances the readability and expressiveness of assertions in our unit tests. It provides a fluent and natural syntax for writing assertions, making our tests more understandable and maintainable.
+
+### 7.2 Unit Testing Goals
+
+Our primary goal in unit testing is to ensure that individual components and classes of our application work as intended in isolation. This includes testing various scenarios, inputs, and edge cases to validate the correctness of our code.
+
+### 7.3 Code Coverage
+
+We strive for achieving a code coverage of 100% in our unit tests. Code coverage measures the percentage of our codebase that is exercised by our tests. A 100% code coverage means that every line of code and every branch is tested at least once. This rigorous approach helps us identify untested or under-tested code, reducing the risk of undiscovered issues in our application.
+
+### 7.4 Test Structure
+
+Our unit tests are organized into the following categories:
+
+- **Configuration Tests:** These tests ensure that the configuration management functions provided by ConfigurationManager are working correctly. We use Moq to create mock configurations for testing different scenarios.
+
+- **Database Access Tests:** The IDbClient interface and its implementations in SqlClient are thoroughly tested to guarantee that database interactions are handled correctly. We use Moq to isolate the database access code.
+
+- **Extension Method Tests:** CheckExtensions, ConvertExtensions, and GuardExtensions classes are subjected to extensive testing to validate the correctness of their methods.
+
+- **Logging Tests:** We test the logging functionality, including CompanyLogger and SqlLogger, to verify that logs are generated as expected.
+
+- **Retry Policy Tests:** The WaitRetryPolicyOnSqlDeadlock class is tested to ensure that it behaves correctly in various SQL deadlock scenarios. We utilize xUnit, Moq, and FluentAssertions to create and execute these tests.
+
+### 7.5 Benefits of Unit Testing
+
+Unit testing offers numerous advantages, including:
+
+- Early issue detection: Problems are identified during development, reducing the cost and effort required to fix them.
+
+- Improved code quality: Testing encourages clean, modular, and maintainable code.
+
+- Confidence in changes: Tests provide a safety net when making modifications, preventing regressions.
+
+- Documentation: Tests serve as living documentation, demonstrating how code should be used and what it should do.
+
+By adhering to rigorous unit testing practices, we ensure that our codebase remains reliable and that new features and modifications do not introduce unintended consequences.
+
+## 8. Conclusion
+
+Incorporating unit testing with xUnit, Moq, and FluentAssertions into our development process is essential for maintaining the quality and reliability of our software. With a focus on achieving 100% code coverage, we minimize the risk of defects and regressions, allowing us to deliver a robust and stable application to our users.
+
+For specific test cases and examples, please refer to the corresponding unit test projects within our solution.
