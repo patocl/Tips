@@ -27,6 +27,9 @@ In the ever-evolving landscape of software development, it is imperative to cont
 
 As our software application grows in complexity and handles a greater volume of data and transactions, it is crucial to address specific challenges that may arise. One of these challenges is handling SQL deadlocks gracefully. SQL deadlocks occur when multiple database transactions compete for the same resources and can lead to performance degradation or application failures.
 
+The code project must be built on the VB.NET programming language, and we have chosen to stick with VB.NET to avoid the complexity and overhead associated with creating a new project in C#. This decision aligns with our goal of keeping our current solution as straightforward as possible.
+
+
 ## 3. Folder Structure for the Project
 
 To maintain a well-organized and structured codebase, our project follows a logical folder structure. This structure ensures that different components and modules of the application are neatly organized for easy navigation and maintenance. Below is an overview of our project's folder structure:
@@ -200,3 +203,26 @@ By adhering to rigorous unit testing practices, we ensure that our codebase rema
 Incorporating unit testing with xUnit, Moq, and FluentAssertions into our development process is essential for maintaining the quality and reliability of our software. With a focus on achieving 100% code coverage, we minimize the risk of defects and regressions, allowing us to deliver a robust and stable application to our users.
 
 For specific test cases and examples, please refer to the corresponding unit test projects within our solution.
+
+
+## Organization of the Solution and Test Projects
+
+**Organizing the Solution and Test Projects:**
+
+1. **Remove the existing "Tests" folder:**
+   - Open your project solution within your integrated development environment (IDE).
+
+   - In the Solution Explorer, locate and delete the "Tests" folder or any other folder where unit tests are currently stored. You can perform this action by selecting and deleting the folder from the IDE's user interface.
+
+2. **Create separate unit test projects:**
+   - For each component requiring validation, create new individual unit test projects. Utilize a naming convention such as "[ProjectName].Test" for these test projects.
+
+3. **Physically organize test projects in the "Test" folder:**
+   - Create a new folder named "Test" in the solution directory.
+
+   - Relocate the newly created unit test projects (e.g., "Helper.Test") into the "Test" folder within the solution directory.
+
+4. **Adjust references and configurations:**
+   - Update project references as needed to ensure that the primary projects (e.g., "Helper") correctly reference the corresponding unit test projects (e.g., "Helper.Test").
+
+By following these steps, the developer can effectively organize the solution and test projects as required, as detailed in the technical document's "Organization of the Solution and Test Projects" section.
