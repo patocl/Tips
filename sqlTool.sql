@@ -3,14 +3,14 @@ DECLARE @newDatabaseName NVARCHAR(128) = 'database02'
 
 DECLARE @sql NVARCHAR(MAX)
 
--- Actualizar referencias en Vistas
+-- Update references in Views
 SELECT @sql = ISNULL(@sql, '') +
     'ALTER VIEW ' + QUOTENAME(OBJECT_SCHEMA_NAME(object_id)) + '.' + QUOTENAME(name) + 
     ' AS ' + REPLACE(OBJECT_DEFINITION(object_id), @oldDatabaseName, @newDatabaseName) + ';' + CHAR(13)
 FROM sys.views
 WHERE OBJECT_DEFINITION(object_id) LIKE '%' + @oldDatabaseName + '%'
 
--- Actualizar referencias en Funciones
+-- Update references in Functions
 SELECT @sql = @sql + ISNULL(@sql, '') +
     'ALTER FUNCTION ' + QUOTENAME(OBJECT_SCHEMA_NAME(object_id)) + '.' + QUOTENAME(name) + 
     '(@params)' + 
@@ -19,7 +19,7 @@ SELECT @sql = @sql + ISNULL(@sql, '') +
 FROM sys.sql_modules
 WHERE definition LIKE '%' + @oldDatabaseName + '%'
 
--- Actualizar referencias en Procedimientos Almacenados
+-- Update references in Stored Procedures
 SELECT @sql = @sql + ISNULL(@sql, '') +
     'ALTER PROCEDURE ' + QUOTENAME(OBJECT_SCHEMA_NAME(object_id)) + '.' + QUOTENAME(name) + 
     '(@params)' + 
@@ -27,7 +27,7 @@ SELECT @sql = @sql + ISNULL(@sql, '') +
 FROM sys.sql_modules
 WHERE definition LIKE '%' + @oldDatabaseName + '%'
 
--- Actualizar referencias en Sinónimos
+-- Update references in Synonyms
 SELECT @sql = @sql + ISNULL(@sql, '') +
     'DROP SYNONYM ' + QUOTENAME(name) + ';' + CHAR(13) +
     'CREATE SYNONYM ' + QUOTENAME(name) + ' FOR ' +
@@ -35,4 +35,4 @@ SELECT @sql = @sql + ISNULL(@sql, '') +
 FROM sys.synonyms
 WHERE base_object_name LIKE '%' + @oldDatabaseName + '%'
 
-PRINT @sql -- Esto imprimirá los scripts generados
+PRINT @sql -- This will print the generated scripts
