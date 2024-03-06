@@ -10,6 +10,7 @@ SELECT @sql = @sql +
     ' AS ' + REPLACE(OBJECT_DEFINITION(v.object_id), @oldDatabaseName, @newDatabaseName) + ';' + CHAR(13)
 FROM sys.views v
 WHERE OBJECT_DEFINITION(v.object_id) LIKE '%' + @oldDatabaseName + '%'
+GROUP BY OBJECT_SCHEMA_NAME(v.object_id), v.name
 
 -- Update references in Functions
 SELECT @sql = @sql +
@@ -21,6 +22,7 @@ SELECT @sql = @sql +
 FROM sys.sql_modules m
 INNER JOIN sys.objects o ON m.object_id = o.object_id
 WHERE m.definition LIKE '%' + @oldDatabaseName + '%'
+GROUP BY OBJECT_SCHEMA_NAME(m.object_id), o.name
 
 -- Update references in Stored Procedures
 SELECT @sql = @sql +
@@ -31,5 +33,16 @@ SELECT @sql = @sql +
 FROM sys.sql_modules m
 INNER JOIN sys.objects o ON m.object_id = o.object_id
 WHERE m.definition LIKE '%' + @oldDatabaseName + '%'
+GROUP BY OBJECT_SCHEMA_NAME(m.object_id), o.name
+
+-- Update references in Synonyms
+SELECT @sql = @sql +
+    '-- Update ' + CAST(COUNT(*) AS NVARCHAR(10)) + ' references in Synonyms' + CHAR(13) +
+    'DROP SYNONYM ' + QUOTENAME(s.name) + ';' + CHAR(13) +
+    'CREATE SYNONYM ' + QUOTENAME(s.name) + ' FOR ' +
+    REPLACE(s.base_object_name, @oldDatabaseName, @newDatabaseName) + ';' + CHAR(13) + CHAR(13)
+FROM sys.synonyms s
+WHERE s.base_object_name LIKE '%' + @oldDatabaseName + '%'
+GROUP BY s.name, s.base_object_name
 
 PRINT @sql -- This will print the generated scripts
