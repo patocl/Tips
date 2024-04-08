@@ -16,8 +16,8 @@ WHERE OBJECT_DEFINITION(object_id) LIKE '%' + @oldDatabaseName + '%';
 -- Generate alteration scripts for Functions
 SELECT @sql = @sql +
     'GO' + CHAR(13) +
-    'IF OBJECT_ID(''[' + SCHEMA_NAME(m.schema_id) + '].[' + o.name + ']'') IS NOT NULL' + CHAR(13) +
-    '    DROP FUNCTION ' + QUOTENAME(SCHEMA_NAME(m.schema_id)) + '.' + QUOTENAME(o.name) + ';' + CHAR(13) +
+    'IF OBJECT_ID(''[' + SCHEMA_NAME(o.schema_id) + '].[' + o.name + ']'') IS NOT NULL' + CHAR(13) +
+    '    DROP FUNCTION ' + QUOTENAME(SCHEMA_NAME(o.schema_id)) + '.' + QUOTENAME(o.name) + ';' + CHAR(13) +
     'GO' + CHAR(13) +
     REPLACE(m.definition, @oldDatabaseName, @newDatabaseName) + CHAR(13)
 FROM sys.sql_modules m
@@ -28,10 +28,10 @@ AND o.type_desc IN ('SQL_SCALAR_FUNCTION', 'SQL_TABLE_VALUED_FUNCTION', 'SQL_INL
 -- Generate alteration scripts for Stored Procedures
 SELECT @sql = @sql +
     'GO' + CHAR(13) +
-    'IF OBJECT_ID(''[' + SCHEMA_NAME(m.schema_id) + '].[' + o.name + ']'') IS NOT NULL' + CHAR(13) +
-    '    DROP PROCEDURE ' + QUOTENAME(SCHEMA_NAME(m.schema_id)) + '.' + QUOTENAME(o.name) + ';' + CHAR(13) +
+    'IF OBJECT_ID(''[' + SCHEMA_NAME(o.schema_id) + '].[' + o.name + ']'') IS NOT NULL' + CHAR(13) +
+    '    DROP PROCEDURE ' + QUOTENAME(SCHEMA_NAME(o.schema_id)) + '.' + QUOTENAME(o.name) + ';' + CHAR(13) +
     'GO' + CHAR(13) +
-    REPLACE(m.definition, @oldDatabaseName, @newDatabaseName + CHAR(13)
+    REPLACE(m.definition, @oldDatabaseName, @newDatabaseName) + CHAR(13)
 FROM sys.sql_modules m
 INNER JOIN sys.objects o ON m.object_id = o.object_id
 WHERE m.definition LIKE '%' + @oldDatabaseName + '%'
