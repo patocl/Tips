@@ -4,6 +4,9 @@
 
 This guide provides step-by-step instructions to configure IBM MQ for seamless integration with Active Directory (AD) accounts using VAS (Vendor Authentication Service), mapping the "NETWORK SERVICE" account for MSDTC (Microsoft Distributed Transaction Coordinator) on Windows, and implementing TLS/SSL authentication for secure communication between clients and servers. Follow these instructions to ensure a smooth setup and deployment of IBM MQ in your environment.
 
+Shortcuts to emulate CTRL+ALT+DEL -> 
+C:\Windows\explorer.exe shell:::{2559a1f2-21d7-11d4-bdaf-00c04f60b9f0}
+
 ## Part 1: Configuring the MQ Server on Linux  
 
 1. **Configure VAS on Linux**  
