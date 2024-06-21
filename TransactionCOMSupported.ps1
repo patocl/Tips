@@ -1,35 +1,24 @@
-# Definir el nombre inicial del componente
+# Define the initial component name prefix
 $componentPrefix = "My Components.*"
 
-# Importar el módulo de COM+ Admin
-Add-Type -TypeDefinition @"
-using System;
-using System.EnterpriseServices;
-using System.Runtime.InteropServices;
+# Create the COMAdminCatalog object
+$catalog = New-Object -ComObject COMAdmin.COMAdminCatalog
 
-public class ComAdmin {
-    [DllImport("comadmin.dll", CharSet = CharSet.Unicode)]
-    public static extern IntPtr CoCreateInstance([In] ref Guid rclsid, [In] IntPtr pUnkOuter, [In] int dwClsContext, [In] ref Guid riid);
+# Get the COM+ applications
+$applications = $catalog.GetCollection("Applications")
+$applications.Populate()
+
+# Iterate over each application to get the components
+$results = @()
+
+foreach ($app in $applications) {
+    $components = $catalog.GetCollection("Components", $app.Key)
+    $components.Populate()
     
-    public static ComAdminCatalog GetCatalog() {
-        Guid CLSID_COMAdminCatalog = new Guid("F618C514-DFB8-11D1-A2CF-00805FC79235");
-        Guid IID_ICOMAdminCatalog = new Guid("DD662187-DFC2-11D1-A2CF-00805FC79235");
-        IntPtr pCatalog = CoCreateInstance(ref CLSID_COMAdminCatalog, IntPtr.Zero, 1, ref IID_ICOMAdminCatalog);
-        return (ComAdminCatalog)Marshal.GetObjectForIUnknown(pCatalog);
-    }
-}
-"@
-
-# Obtener el catálogo de COM+
-$catalog = [ComAdmin]::GetCatalog()
-
-# Obtener y procesar aplicaciones y componentes COM+
-$results = $catalog.GetCollection("Applications").Populate() | ForEach-Object {
-    $app = $_
-    $catalog.GetCollection("Components", $app.Key).Populate() | ForEach-Object {
-        $component = $_
-        if ($component.Name -like $componentPrefix -and $component.Transaction -gt 0) {
-            [PSCustomObject]@{
+    foreach ($component in $components) {
+        # Filter components that support transactions and whose name starts with the specified prefix
+        if ($component.Name -like $componentPrefix -and $component.Transaction > 0) {
+            $results += [PSCustomObject]@{
                 ApplicationName = $app.Name
                 ComponentName = $component.Name
                 TransactionSupport = $component.Transaction
@@ -38,5 +27,5 @@ $results = $catalog.GetCollection("Applications").Populate() | ForEach-Object {
     }
 }
 
-# Mostrar los resultados
+# Display the results
 $results
